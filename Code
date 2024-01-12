@@ -1,0 +1,219 @@
+import tkinter as tk
+import tkinter as tk
+from tkinter import messagebox, ttk
+import numpy as np
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
+
+# Defining fuzzy variables
+age = ctrl.Antecedent(np.arange(20, 100, 1), 'age')
+hypertension = ctrl.Antecedent(np.arange(0, 2, 1), 'hypertension')
+genetic_disorder = ctrl.Antecedent(np.arange(0, 2, 1), 'genetic_disorder')
+diabetes = ctrl.Antecedent(np.arange(0, 2, 1), 'diabetes')
+smoking = ctrl.Antecedent(np.arange(0, 2, 1), 'smoking')
+cholesterol = ctrl.Antecedent(np.arange(0, 300, 1), 'cholesterol')  # Measured in mg/dL
+cardio_history = ctrl.Antecedent(np.arange(0, 2, 1), 'cardio_history')
+gender = ctrl.Antecedent(np.arange(0, 2, 1), 'gender')  # 0 for female, 1 for male
+stroke_risk = ctrl.Consequent(np.arange(0, 101, 1), 'stroke_risk')
+blood_pressure = ctrl.Antecedent(np.arange(60, 200, 1), 'blood_pressure')  # Measured in mmHg
+bmi = ctrl.Antecedent(np.arange(15, 50, 1), 'bmi')  # Body Mass Index
+prior_stroke = ctrl.Antecedent(np.arange(0, 2, 1), 'prior_stroke')
+medication = ctrl.Antecedent(np.arange(0, 2, 1), 'medication')  # Anticoagulants
+
+
+# Membership functions for age (refined)
+age['young'] = fuzz.trimf(age.universe, [20, 20, 40])
+age['middle_aged'] = fuzz.trimf(age.universe, [35, 55, 75])
+age['old'] = fuzz.trimf(age.universe, [70, 85, 100])
+
+# Membership functions for binary factors
+binary_no = [0, 0, 1]
+binary_yes = [0, 1, 1]
+
+hypertension['no'] = fuzz.trimf(hypertension.universe, binary_no)
+hypertension['yes'] = fuzz.trimf(hypertension.universe, binary_yes)
+
+genetic_disorder['no'] = fuzz.trimf(genetic_disorder.universe, binary_no)
+genetic_disorder['yes'] = fuzz.trimf(genetic_disorder.universe, binary_yes)
+
+diabetes['no'] = fuzz.trimf(diabetes.universe, binary_no)
+diabetes['yes'] = fuzz.trimf(diabetes.universe, binary_yes)
+
+smoking['no'] = fuzz.trimf(smoking.universe, binary_no)
+smoking['yes'] = fuzz.trimf(smoking.universe, binary_yes)
+
+cardio_history['no'] = fuzz.trimf(cardio_history.universe, binary_no)
+cardio_history['yes'] = fuzz.trimf(cardio_history.universe, binary_yes)
+
+gender['female'] = fuzz.trimf(gender.universe, binary_no)  # 0 for female
+gender['male'] = fuzz.trimf(gender.universe, binary_yes)    # 1 for male
+
+# Membership function for cholesterol
+cholesterol['low'] = fuzz.trimf(cholesterol.universe, [0, 0, 200])
+cholesterol['borderline'] = fuzz.trimf(cholesterol.universe, [150, 200, 250])
+cholesterol['high'] = fuzz.trimf(cholesterol.universe, [200, 300, 300])
+
+# Refined stroke risk categories
+stroke_risk['low'] = fuzz.trimf(stroke_risk.universe, [0, 0, 33])
+stroke_risk['moderate'] = fuzz.trimf(stroke_risk.universe, [20, 50, 80])
+stroke_risk['high'] = fuzz.trimf(stroke_risk.universe, [60, 100, 100])
+
+blood_pressure['low'] = fuzz.trimf(blood_pressure.universe, [60, 60, 90])
+blood_pressure['normal'] = fuzz.trimf(blood_pressure.universe, [80, 120, 160])
+blood_pressure['high'] = fuzz.trimf(blood_pressure.universe, [140, 180, 200])
+
+bmi['underweight'] = fuzz.trimf(bmi.universe, [15, 15, 18.5])
+bmi['normal'] = fuzz.trimf(bmi.universe, [18.5, 24.9, 30])
+bmi['overweight'] = fuzz.trimf(bmi.universe, [25, 30, 50])
+
+prior_stroke['no'] = fuzz.trimf(prior_stroke.universe, binary_no)
+prior_stroke['yes'] = fuzz.trimf(prior_stroke.universe, binary_yes)
+
+medication['no'] = fuzz.trimf(medication.universe, binary_no)
+medication['yes'] = fuzz.trimf(medication.universe, binary_yes)
+
+# More complex fuzzy rules considering new factors
+rules = [
+    ctrl.Rule(age['young'] & hypertension['no'] & genetic_disorder['no'], stroke_risk['low']),
+    ctrl.Rule(hypertension['yes'] | diabetes['yes'], stroke_risk['moderate']),
+    ctrl.Rule(age['old'] | genetic_disorder['yes'] | (cholesterol['high'] & smoking['yes']), stroke_risk['high']),
+    ctrl.Rule(smoking['yes'] & cardio_history['yes'], stroke_risk['high']),
+    ctrl.Rule(gender['male'] & age['middle_aged'] & cholesterol['borderline'], stroke_risk['moderate']),
+    ctrl.Rule(blood_pressure['high'] | bmi['overweight'], stroke_risk['moderate']),
+    ctrl.Rule(prior_stroke['yes'] | (blood_pressure['high'] & medication['yes']), stroke_risk['high']),
+]
+
+# Function to calculate stroke risk using fuzzy logic (from your code)
+def calculate_fuzzy_stroke_risk(age, hypertension, genetic_disorder, diabetes, smoking, cholesterol, cardio_history, gender, blood_pressure, bmi, prior_stroke, medication):
+    # Set inputs to the fuzzy logic system
+    stroke_risk_sim.input['age'] = age
+    stroke_risk_sim.input['hypertension'] = hypertension
+    stroke_risk_sim.input['genetic_disorder'] = genetic_disorder
+    stroke_risk_sim.input['diabetes'] = diabetes
+    stroke_risk_sim.input['smoking'] = smoking
+    stroke_risk_sim.input['cholesterol'] = cholesterol
+    stroke_risk_sim.input['cardio_history'] = cardio_history
+    stroke_risk_sim.input['gender'] = gender
+    stroke_risk_sim.input['blood_pressure'] = blood_pressure
+    stroke_risk_sim.input['bmi'] = bmi
+    stroke_risk_sim.input['prior_stroke'] = prior_stroke
+    stroke_risk_sim.input['medication'] = medication
+    
+    try:
+        # Compute the result
+        stroke_risk_sim.compute()
+        return stroke_risk_sim.output['stroke_risk']
+    except ValueError:
+        # Default stroke risk value in case no rules are activated
+        default_stroke_risk_value = 50  # Adjust this as per your requirement
+        return default_stroke_risk_value
+    
+    # Compute and return the result
+    stroke_risk_sim.compute()
+    return stroke_risk_sim.output['stroke_risk']
+
+# Initialize the fuzzy control system
+stroke_risk_ctrl = ctrl.ControlSystem(rules)
+stroke_risk_sim = ctrl.ControlSystemSimulation(stroke_risk_ctrl)
+
+# Function to fetch values from UI and calculate risk
+def calculate_and_display_risk():
+    try:
+        # Fetching values from the UI
+        age_val = age_scale.get()
+        hypertension_val = binary_values[hypertension_combobox.get()]
+        genetic_disorder_val = binary_values[genetic_disorder_combobox.get()]
+        diabetes_val = binary_values[diabetes_combobox.get()]
+        smoking_val = binary_values[smoking_combobox.get()]
+        cholesterol_val = cholesterol_scale.get()
+        cardio_history_val = binary_values[cardio_history_combobox.get()]
+        gender_val = binary_values[gender_combobox.get()]
+        blood_pressure_val = blood_pressure_scale.get()
+        bmi_val = bmi_scale.get()
+        prior_stroke_val = binary_values[prior_stroke_combobox.get()]
+        medication_val = binary_values[medication_combobox.get()]
+        gender_val = 1 if gender_combobox.get() == 'Male' else 0
+
+
+        # Calculate risk
+        risk = calculate_fuzzy_stroke_risk(age_val, hypertension_val, genetic_disorder_val, diabetes_val, smoking_val, cholesterol_val, cardio_history_val, gender_val, blood_pressure_val, bmi_val, prior_stroke_val, medication_val)
+        
+        # Display result
+        messagebox.showinfo("Result", f"Calculated Stroke Risk: {risk:.2f}%")
+    except ValueError as e:
+        messagebox.showerror("Error", "Invalid input. Please enter valid numbers.")
+
+# Create the main window
+window = tk.Tk()
+window.title("Stroke Risk Prediction")
+
+# Dropdown options for binary values
+binary_options = ['No', 'Yes']
+binary_values = {'No': 0, 'Yes': 1, 'Female': 0, 'Male': 1}
+
+# Age
+tk.Label(window, text="Age:").pack()
+age_scale = tk.Scale(window, from_=20, to=100, orient=tk.HORIZONTAL)
+age_scale.pack()
+
+# Hypertension
+tk.Label(window, text="Hypertension:").pack()
+hypertension_combobox = ttk.Combobox(window, values=binary_options)
+hypertension_combobox.pack()
+
+# Genetic Disorder
+tk.Label(window, text="Genetic Disorder:").pack()
+genetic_disorder_combobox = ttk.Combobox(window, values=binary_options)
+genetic_disorder_combobox.pack()
+
+# Diabetes
+tk.Label(window, text="Diabetes:").pack()
+diabetes_combobox = ttk.Combobox(window, values=binary_options)
+diabetes_combobox.pack()
+
+# Smoking
+tk.Label(window, text="Smoking:").pack()
+smoking_combobox = ttk.Combobox(window, values=binary_options)
+smoking_combobox.pack()
+
+# Cholesterol
+tk.Label(window, text="Cholesterol (mg/dL):").pack()
+cholesterol_scale = tk.Scale(window, from_=0, to=300, orient=tk.HORIZONTAL)
+cholesterol_scale.pack()
+
+# Cardio History
+tk.Label(window, text="Cardio History:").pack()
+cardio_history_combobox = ttk.Combobox(window, values=binary_options)
+cardio_history_combobox.pack()
+
+# Gender
+tk.Label(window, text="Gender:").pack()
+gender_combobox = ttk.Combobox(window, values=['Female', 'Male'])
+gender_combobox.pack()
+
+# Blood Pressure
+tk.Label(window, text="Blood Pressure (mmHg):").pack()
+blood_pressure_scale = tk.Scale(window, from_=60, to=200, orient=tk.HORIZONTAL)
+blood_pressure_scale.pack()
+
+# BMI
+tk.Label(window, text="BMI:").pack()
+bmi_scale = tk.Scale(window, from_=15, to=50, orient=tk.HORIZONTAL)
+bmi_scale.pack()
+
+# Prior Stroke
+tk.Label(window, text="Prior Stroke:").pack()
+prior_stroke_combobox = ttk.Combobox(window, values=binary_options)
+prior_stroke_combobox.pack()
+
+# Medication (Anticoagulants)
+tk.Label(window, text="Medication (Anticoagulants):").pack()
+medication_combobox = ttk.Combobox(window, values=binary_options)
+medication_combobox.pack()
+
+# Calculate button
+calculate_button = tk.Button(window, text="Calculate Risk", command=calculate_and_display_risk)
+calculate_button.pack()
+
+# Run the application
+window.mainloop()
