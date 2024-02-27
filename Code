@@ -21,7 +21,7 @@ prior_stroke = ctrl.Antecedent(np.arange(0, 2, 1), 'prior_stroke')
 medication = ctrl.Antecedent(np.arange(0, 2, 1), 'medication')  # Anticoagulants
 
 
-# Membership functions for age (refined)
+# Membership functions for age 
 age['young'] = fuzz.trimf(age.universe, [20, 20, 40])
 age['middle_aged'] = fuzz.trimf(age.universe, [35, 55, 75])
 age['old'] = fuzz.trimf(age.universe, [70, 85, 100])
@@ -72,7 +72,7 @@ prior_stroke['yes'] = fuzz.trimf(prior_stroke.universe, binary_yes)
 medication['no'] = fuzz.trimf(medication.universe, binary_no)
 medication['yes'] = fuzz.trimf(medication.universe, binary_yes)
 
-# More complex fuzzy rules considering new factors
+# More complex fuzzy rules 
 rules = [
     ctrl.Rule(age['young'] & hypertension['no'] & genetic_disorder['no'], stroke_risk['low']),
     ctrl.Rule(hypertension['yes'] | diabetes['yes'], stroke_risk['moderate']),
@@ -83,7 +83,7 @@ rules = [
     ctrl.Rule(prior_stroke['yes'] | (blood_pressure['high'] & medication['yes']), stroke_risk['high']),
 ]
 
-# Function to calculate stroke risk using fuzzy logic (from your code)
+# Function to calculate stroke risk using fuzzy logic 
 def calculate_fuzzy_stroke_risk(age, hypertension, genetic_disorder, diabetes, smoking, cholesterol, cardio_history, gender, blood_pressure, bmi, prior_stroke, medication):
     # Set inputs to the fuzzy logic system
     stroke_risk_sim.input['age'] = age
