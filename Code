@@ -1,34 +1,56 @@
 import tkinter as tk
-import tkinter as tk
 from tkinter import messagebox, ttk
 import numpy as np
-import skfuzzy as fuzz
+import  skfuzzy  as fuzz
 from skfuzzy import control as ctrl
 
-# Defining fuzzy variables
+# Defining fuzzy variables with refined and additional categories
 age = ctrl.Antecedent(np.arange(20, 100, 1), 'age')
 hypertension = ctrl.Antecedent(np.arange(0, 2, 1), 'hypertension')
 genetic_disorder = ctrl.Antecedent(np.arange(0, 2, 1), 'genetic_disorder')
 diabetes = ctrl.Antecedent(np.arange(0, 2, 1), 'diabetes')
 smoking = ctrl.Antecedent(np.arange(0, 2, 1), 'smoking')
-cholesterol = ctrl.Antecedent(np.arange(0, 300, 1), 'cholesterol')  # Measured in mg/dL
+cholesterol = ctrl.Antecedent(np.arange(0, 300, 1), 'cholesterol')
 cardio_history = ctrl.Antecedent(np.arange(0, 2, 1), 'cardio_history')
-gender = ctrl.Antecedent(np.arange(0, 2, 1), 'gender')  # 0 for female, 1 for male
+gender = ctrl.Antecedent(np.arange(0, 2, 1), 'gender')
 stroke_risk = ctrl.Consequent(np.arange(0, 101, 1), 'stroke_risk')
-blood_pressure = ctrl.Antecedent(np.arange(60, 200, 1), 'blood_pressure')  # Measured in mmHg
-bmi = ctrl.Antecedent(np.arange(15, 50, 1), 'bmi')  # Body Mass Index
+blood_pressure = ctrl.Antecedent(np.arange(60, 200, 1), 'blood_pressure')
+bmi = ctrl.Antecedent(np.arange(15, 50, 1), 'bmi')
 prior_stroke = ctrl.Antecedent(np.arange(0, 2, 1), 'prior_stroke')
-medication = ctrl.Antecedent(np.arange(0, 2, 1), 'medication')  # Anticoagulants
+medication = ctrl.Antecedent(np.arange(0, 2, 1), 'medication')
 
+# Membership functions refinement and additions for age
+age['young'] = fuzz.trimf(age.universe, [20, 20, 35])
+age['middle_aged'] = fuzz.trimf(age.universe, [30, 50, 70])
+age['old'] = fuzz.trimf(age.universe, [65, 75, 85])
+age['very_old'] = fuzz.trimf(age.universe, [80, 90, 100])
 
-# Membership functions for age (refined)
-age['young'] = fuzz.trimf(age.universe, [20, 20, 40])
-age['middle_aged'] = fuzz.trimf(age.universe, [35, 55, 75])
-age['old'] = fuzz.trimf(age.universe, [70, 85, 100])
-
-# Membership functions for binary factors
 binary_no = [0, 0, 1]
 binary_yes = [0, 1, 1]
+
+# Blood pressure adjustments
+blood_pressure['low'] = fuzz.trimf(blood_pressure.universe, [60, 60, 90])
+blood_pressure['normal'] = fuzz.trimf(blood_pressure.universe, [80, 120, 160])
+blood_pressure['high'] = fuzz.trimf(blood_pressure.universe, [140, 160, 180])
+blood_pressure['very_high'] = fuzz.trimf(blood_pressure.universe, [170, 190, 200])
+
+# Cholesterol levels adjustments
+cholesterol['low'] = fuzz.trimf(cholesterol.universe, [0, 0, 200])
+cholesterol['borderline'] = fuzz.trimf(cholesterol.universe, [180, 200, 240])
+cholesterol['high'] = fuzz.trimf(cholesterol.universe, [220, 240, 270])
+cholesterol['very_high'] = fuzz.trimf(cholesterol.universe, [260, 300, 300])
+
+# BMI refinement for obesity thresholds
+bmi['underweight'] = fuzz.trimf(bmi.universe, [15, 15, 18.5])
+bmi['normal'] = fuzz.trimf(bmi.universe, [18.5, 22.5, 25])
+bmi['overweight'] = fuzz.trimf(bmi.universe, [24, 27, 30])
+bmi['obese'] = fuzz.trimf(bmi.universe, [29, 35, 50])
+
+prior_stroke['no'] = fuzz.trimf(prior_stroke.universe, binary_no)
+prior_stroke['yes'] = fuzz.trimf(prior_stroke.universe, binary_yes)
+
+medication['no'] = fuzz.trimf(medication.universe, binary_no)
+medication['yes'] = fuzz.trimf(medication.universe, binary_yes)
 
 hypertension['no'] = fuzz.trimf(hypertension.universe, binary_no)
 hypertension['yes'] = fuzz.trimf(hypertension.universe, binary_yes)
@@ -58,21 +80,7 @@ stroke_risk['low'] = fuzz.trimf(stroke_risk.universe, [0, 0, 33])
 stroke_risk['moderate'] = fuzz.trimf(stroke_risk.universe, [20, 50, 80])
 stroke_risk['high'] = fuzz.trimf(stroke_risk.universe, [60, 100, 100])
 
-blood_pressure['low'] = fuzz.trimf(blood_pressure.universe, [60, 60, 90])
-blood_pressure['normal'] = fuzz.trimf(blood_pressure.universe, [80, 120, 160])
-blood_pressure['high'] = fuzz.trimf(blood_pressure.universe, [140, 180, 200])
-
-bmi['underweight'] = fuzz.trimf(bmi.universe, [15, 15, 18.5])
-bmi['normal'] = fuzz.trimf(bmi.universe, [18.5, 24.9, 30])
-bmi['overweight'] = fuzz.trimf(bmi.universe, [25, 30, 50])
-
-prior_stroke['no'] = fuzz.trimf(prior_stroke.universe, binary_no)
-prior_stroke['yes'] = fuzz.trimf(prior_stroke.universe, binary_yes)
-
-medication['no'] = fuzz.trimf(medication.universe, binary_no)
-medication['yes'] = fuzz.trimf(medication.universe, binary_yes)
-
-# More complex fuzzy rules considering new factors
+# Adding complex interactions and rule weighting in the rule base
 rules = [
     ctrl.Rule(age['young'] & hypertension['no'] & genetic_disorder['no'], stroke_risk['low']),
     ctrl.Rule(hypertension['yes'] | diabetes['yes'], stroke_risk['moderate']),
@@ -80,8 +88,16 @@ rules = [
     ctrl.Rule(smoking['yes'] & cardio_history['yes'], stroke_risk['high']),
     ctrl.Rule(gender['male'] & age['middle_aged'] & cholesterol['borderline'], stroke_risk['moderate']),
     ctrl.Rule(blood_pressure['high'] | bmi['overweight'], stroke_risk['moderate']),
-    ctrl.Rule(prior_stroke['yes'] | (blood_pressure['high'] & medication['yes']), stroke_risk['high']),
+    ctrl.Rule(prior_stroke['yes'] | (blood_pressure['very_high'] & medication['yes']), stroke_risk['high']),
+    # Adding rules for complex interactions
+    ctrl.Rule(age['very_old'] & blood_pressure['very_high'] & diabetes['yes'], stroke_risk['high']),
+    # Rule weighting can be simulated by adding more specific rules with the same outcome to increase their influence
+    ctrl.Rule(age['very_old'] & blood_pressure['very_high'] & prior_stroke['yes'], stroke_risk['high'], ),
 ]
+
+# Initialize the fuzzy control system with the updated rules
+stroke_risk_ctrl = ctrl.ControlSystem(rules)
+stroke_risk_sim = ctrl.ControlSystemSimulation(stroke_risk_ctrl)
 
 # Function to calculate stroke risk using fuzzy logic (from your code)
 def calculate_fuzzy_stroke_risk(age, hypertension, genetic_disorder, diabetes, smoking, cholesterol, cardio_history, gender, blood_pressure, bmi, prior_stroke, medication):
@@ -115,6 +131,7 @@ def calculate_fuzzy_stroke_risk(age, hypertension, genetic_disorder, diabetes, s
 # Initialize the fuzzy control system
 stroke_risk_ctrl = ctrl.ControlSystem(rules)
 stroke_risk_sim = ctrl.ControlSystemSimulation(stroke_risk_ctrl)
+
 
 # Function to fetch values from UI and calculate risk
 def calculate_and_display_risk():
